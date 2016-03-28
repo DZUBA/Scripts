@@ -8,7 +8,7 @@ backupdir=/backup/monthly/thismonth
 monthly=/backup/monthly
 daily=/backup/daily
 mycnf=/etc/mysql/my.cnf
-mysqlpasswd=`cat /root/.mysqlpasswd`
+mysqlpasswd=`cat ~/.mysqlpasswd`
 log=/backup/log/backup.log
 
 #Moving last week full backup to his original date dir

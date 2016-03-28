@@ -6,7 +6,7 @@ bkptime=`date "+%H%M%S"`
 backupdir=/backup/montly/thismonth
 daily=/backup/daily/thismonth
 mycnf=/etc/mysql/my.cnf
-mysqlpasswd=`cat /root/.mysqlpasswd`
+mysqlpasswd=`cat ~/.mysqlpasswd`
 log=/backup/log/backup.log
 
 echo "Starting mysql backup $bkpdate $bkptime" >> $log

@@ -127,16 +127,16 @@ echo "Next free ip is - $vmip. VM's name gonna be - vm$vm.";
 ping -c 2 "$vmip" > /dev/null 2>&1
 	if [ "$?" -eq "0" ];
 		then 
-		echo "Sorry, but this "$ip" address busy. Probably record about this IP doesn't exist in FreeIP DB"
+		echo "Sorry, but this $ip address busy. Probably record about this IP doesn't exist in FreeIP DB"
 		echo "Do you want to continue? [yes or no]:"
-		read ans1;
+		read -r ans1;
 		case "$ans1" in
 			yes|Yes|YES|y|Y)
 			echo "Type ip address for this host. Use IP from ___STAGINGS_NETWORK____  network:";
-			while read vmip; do
+			while read -r vmip; do
 			ping -c 2 "$vmip" > /dev/null 2>&1
 					if [ "$?" -eq "0" ]; then
-					echo "Sorry, but this "$vmip" address busy. Probably record about this IP doesn't exist in FreeIP DB"
+					echo "Sorry, but this $vmip address busy. Probably record about this IP doesn't exist in FreeIP DB"
 					echo "Type ip address for this host. Use IP from ___STAGINGS_NETWORK____ network:"
 				else
 					break
@@ -156,9 +156,9 @@ ping -c 2 "$vmip" > /dev/null 2>&1
 	fi
 
 #Renew vm variable if it has been changed
-vm=`echo "$vmip" | cut -d '.' -f4`
+vm=$(echo "$vmip" | cut -d '.' -f4)
 
-$ovftool -n=ua1-vm$vm -dm=thin -ds=$esxids $image "vi://root@$esxihost"
+$ovftool -n=ua1-vm"$vm" -dm=thin -ds="$esxids" "$image" "vi://root@$esxihost"
 	if [ "$?" -ne 0 ];
   		then 
    		echo -e "Error! Check Deployment parameters or use key -h to read manual."
@@ -166,38 +166,38 @@ $ovftool -n=ua1-vm$vm -dm=thin -ds=$esxids $image "vi://root@$esxihost"
   	fi
 
 #Edit VM's parameters
-if [ ! -z $vmcore ]
+if [ ! -z "$vmcore" ]
 	then
-	`ssh root@$esxihost "sed -i 's/numvcpus = .*/numvcpus = "$vmcore"/g' /vmfs/volumes/$esxids/ua1-vm$vm/ua1-vm$vm.vmx"`
+	$(ssh root@"$esxihost" "sed -i 's/numvcpus = .*/numvcpus = $vmcore/g' /vmfs/volumes/$esxids/ua1-vm$vm/ua1-vm$vm.vmx")
 fi
-if [ ! -z $vmram ]
+if [ ! -z "$vmram" ]
 	then
-	`ssh root@$esxihost "sed -i 's/memSize = .*/memSize = "$vmram"/g' /vmfs/volumes/$esxids/ua1-vm$vm/ua1-vm$vm.vmx"`
+	$(ssh root@"$esxihost" "sed -i 's/memSize = .*/memSize = $vmram/g' /vmfs/volumes/$esxids/ua1-vm$vm/ua1-vm$vm.vmx")
 fi
-if [ ! -z $vmvzspace ]
+if [ ! -z "$vmvzspace" ]
 	then
-	`ssh root@$esxihost "vmkfstools -X ${vmvzspace}G /vmfs/volumes/$esxids/ua1-vm$vm/ua1-vm${vm}_1.vmdk"`
+	$(ssh root@"$esxihost" "vmkfstools -X ${vmvzspace}G /vmfs/volumes/$esxids/ua1-vm$vm/ua1-vm${vm}_1.vmdk")
 fi
 
 #Reload VM's config and starting VM
-`ssh root@$esxihost "vim-cmd vmsvc/reload /vmfs/volumes/$esxids/ua1-vm$vm/ua1-vm$vm.vmx; vim-cmd vmsvc/power.on /vmfs/volumes/$esxids/ua1-vm$vm/ua1-vm$vm.vmx"`
+$(ssh root@"$esxihost" "vim-cmd vmsvc/reload /vmfs/volumes/$esxids/ua1-vm$vm/ua1-vm$vm.vmx; vim-cmd vmsvc/power.on /vmfs/volumes/$esxids/ua1-vm$vm/ua1-vm$vm.vmx")
 
 #Create DNS record for this server to PowerDNS Api
 curl "http://dnsadmin.example.org/api/create/?host=vm$vm&ip=$vmip";
 #Reserve ip in FreeIP DB
-mysql $mysqldb -u$mysqluser -h$mysqlhost -p$mysqlpassword -e --skip-secure-auth "UPDATE freeip SET hostname='RESERVED!!!', status='RESERVED!!!', creation_date='$date', update_date='' WHERE ip='$vmip';"
+mysql "$mysqldb" -u"$mysqluser" -h"$mysqlhost" -p"$mysqlpassword" -e --skip-secure-auth "UPDATE freeip SET hostname='RESERVED!!!', status='RESERVED!!!', creation_date=$date, update_date='' WHERE ip="$vmip";"
 #Adding record to st-info.example.org
 mysql $stmysqldb -u$stmysqluser -h$stmysqlhost -p$stmysqlpassword -e --skip-secure-auth "INSERT INTO vmservers SET ipaddr='$vmip', fqdn='vm$vm.example.org', cpu='$vmcore', ram='$vmram', hdd='16', hdd2='$vmvzspace', hypervisor='$esxihw';";
 sleep 5;
 #Network setting setup for VM
 while : 
 do
-	`echo "DEVICE=vzbr0
+	$(echo "DEVICE=vzbr0
 	ONBOOT=yes
 	TYPE=Bridge
 	IPADDR=$vmip
 	NETMASK=___TYPE_NETMASK___
-	GATEWAY=___TYPE_GATEWAY___" | ssh root@___STATIC_TEMPLATE_IP____ "cat > /etc/sysconfig/network-scripts/ifcfg-vzbr0"` 
+	GATEWAY=___TYPE_GATEWAY___" | ssh root@___STATIC_TEMPLATE_IP____ "cat > /etc/sysconfig/network-scripts/ifcfg-vzbr0")
 	error=$?
 	if [ "$error" -eq 127 ];
 		then
@@ -209,7 +209,7 @@ do
 		break 		
 	fi
 done
-`echo "HOSTNAME=vm$vm.example.org" | ssh root@___STATIC_TEMPLATE_IP____ "cat >> /etc/sysconfig/network; resize2fs /dev/sdb; reboot 1>/dev/null "`
+$(echo "HOSTNAME=vm$vm.example.org" | ssh root@___STATIC_TEMPLATE_IP____ "cat >> /etc/sysconfig/network; resize2fs /dev/sdb; reboot 1>/dev/null ")
 #=====
 echo "Deployment finished! VM name is ua1-vm$vm. IP - $vmip."
 #=====

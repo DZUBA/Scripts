@@ -8,22 +8,22 @@ vmcore=$3
 vmram=$4
 vmvzspace=$5
 ovftool="/usr/lib/vmware-ovftool/ovftool"
-image="~/OVA/vm_template.ova"
-date=`date "+%Y-%m-%d %H:%M:%S"`
-mysqluser="~/creds/.mysqluser";
-mysqlpassword="~/creds/.mysqlpasswd";
+image="$HOME/OVA/vm_template.ova"
+date=($date "+%Y-%m-%d %H:%M:%S")
+mysqluser="$HOME/creds/.mysqluser";
+mysqlpassword="$HOME/creds/.mysqlpasswd";
 mysqlhost="___TYPE_HERE_MYSQL_IP___";
 mysqldb="freeip_db";
-stmysqluser="~/creds/.freeipdbuser";
-stmysqlpassword="~/creds/.freeipdbpasswd";
+stmysqluser="$HOME/creds/.freeipdbuser";
+stmysqlpassword="$HOME/creds/.freeipdbpasswd";
 stmysqlhost="___TYPE_HERE_FREEIP_MYSQL_IP___";
 stmysqldb="devinfo"
-esxihw=$(echo "select id from hwservers where ipaddr = '$esxihost' limit 1"| mysql $stmysqldb -u$stmysqluser -h$stmysqlhost -p$stmysqlpassword --skip-secure-auth | sed '1d' )
+esxihw=$(echo "select id from hwservers where ipaddr = $esxihost limit 1"| mysql "$stmysqldb" -u"$stmysqluser" -h"$stmysqlhost" -p"$stmysqlpassword" --skip-secure-auth | sed '1d' )
 
 #Add sshkey
 ssh-add ~/.ssh/id_rsa
 #Checking if user asking for the help
-if [ $esxihost = "-h" ];
+if [ "$esxihost" = "-h" ];
 	then
 	echo "Alex Dzyubenko's autodeployment script.
 
@@ -50,11 +50,11 @@ fi
 
 ##Checking if vmcore vmram vmvzspace are numbers
 
-case $vmcore in
+case "$vmcore" in
 	[0-9]|[0-9][0-4])
 	;;
 	*)
-		if [ ! -z $vmcore ]
+		if [ ! -z "$vmcore" ]
 			then
 			echo "Error! Third, forth and fiveth arguments must a numbers or blank! Use key -h to watch manual."
 			exit 1;
@@ -62,11 +62,11 @@ case $vmcore in
 	;;
 esac
 
-case $vmram in
+case "$vmram" in
 	[0-9]|[0-9][0-9]|[0-9][0-9][0-9]|[0-9][0-9][0-9][0-9]|[0-9][0-9][0-9][0-9][0-9])
 	;;
 	*)
-		if [ ! -z $vmram ]
+		if [ ! -z "$vmram" ]
 			then
 			echo "Error! Third, forth and fiveth arguments must a numbers or blank! Use key -h to watch manual."
 			exit 1;
@@ -74,11 +74,11 @@ case $vmram in
 	;;
 esac
 
-case $vmvzspace in
+case "$vmvzspace" in
 	[0-9]|[0-9][0-9]|[0-9][0-9][0-9])
 	;;
 	*)
-		if [ ! -z $vmvzspace ]
+		if [ ! -z "$vmvzspace" ]
 			then
 			echo "Error! Third, forth and fiveth arguments must a numbers or blank! Use key -h to watch manual."
 			exit 1;
@@ -102,14 +102,14 @@ if ! which mysql >/dev/null 2>&1;
 fi
 
 #Check if ovftool installed
-if [ ! -e $ovftool ];
+if [ ! -e "$ovftool" ];
 	then
 	echo "Error! Ovftool doesn't install please install it or change path to ovftools in variable \"ovftool\""
 	exit 1;
 fi
 
 #Check if OVA/OVF exists
-if [ ! -e $image ];
+if [ ! -e "$image" ];
 	then
 	echo "Error! Can't find OVA/OVF image or change path to image in variable \"image\""
 	exit 1;
@@ -118,25 +118,25 @@ fi
 
 
 #Getting free IP
-freeip=$(echo "select ip from freeip where status = 'free' and ip like '%___STAGINGS_NETWORK____%' limit 1"| mysql $mysqldb -u$mysqluser -h$mysqlhost -p$mysqlpassword --skip-secure-auth )
-vmip=`echo $freeip | cut -d ' ' -f2`
-vm=`echo $vmip | cut -d '.' -f4`
+freeip=$(echo "select ip from freeip where status = 'free' and ip like '%___STAGINGS_NETWORK____%' limit 1"| mysql "$mysqldb" -u"$mysqluser" -h"$mysqlhost" -p"$mysqlpassword" --skip-secure-auth )
+vmip=$(echo "$freeip" | cut -d ' ' -f2)
+vm=$(echo "$vmip" | cut -d '.' -f4)
 
 #Approving IP and VM name
 echo "Next free ip is - $vmip. VM's name gonna be - vm$vm.";
-ping -c 2 $vmip > /dev/null 2>&1
+ping -c 2 "$vmip" > /dev/null 2>&1
 	if [ "$?" -eq "0" ];
 		then 
-		echo "Sorry, but this $ip address busy. Probably record about this IP doesn't exist in FreeIP DB"
+		echo "Sorry, but this "$ip" address busy. Probably record about this IP doesn't exist in FreeIP DB"
 		echo "Do you want to continue? [yes or no]:"
 		read ans1;
-		case $ans1 in
+		case "$ans1" in
 			yes|Yes|YES|y|Y)
 			echo "Type ip address for this host. Use IP from ___STAGINGS_NETWORK____  network:";
 			while read vmip; do
-			ping -c 2 $vmip > /dev/null 2>&1
+			ping -c 2 "$vmip" > /dev/null 2>&1
 					if [ "$?" -eq "0" ]; then
-					echo "Sorry, but this $vmip address busy. Probably record about this IP doesn't exist in FreeIP DB"
+					echo "Sorry, but this "$vmip" address busy. Probably record about this IP doesn't exist in FreeIP DB"
 					echo "Type ip address for this host. Use IP from ___STAGINGS_NETWORK____ network:"
 				else
 					break
@@ -156,7 +156,7 @@ ping -c 2 $vmip > /dev/null 2>&1
 	fi
 
 #Renew vm variable if it has been changed
-vm=`echo $vmip | cut -d '.' -f4`
+vm=`echo "$vmip" | cut -d '.' -f4`
 
 $ovftool -n=ua1-vm$vm -dm=thin -ds=$esxids $image "vi://root@$esxihost"
 	if [ "$?" -ne 0 ];

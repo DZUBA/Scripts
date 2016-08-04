@@ -1,12 +1,12 @@
 #!/bin/sh
 PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
 
-bkpdate=`date "+%Y%m%d"`
-bkptime=`date "+%H%M%S"`
+bkpdate=$(date "+%Y%m%d")
+bkptime=$(date "+%H%M%S")
 backupdir=/backup/montly/thismonth
 daily=/backup/daily/thismonth
 mycnf=/etc/mysql/my.cnf
-mysqlpasswd=`cat ~/.mysqlpasswd`
+mysqlpasswd=$(cat $HOME/.mysqlpasswd)
 log=/backup/log/backup.log
 
 echo "Starting mysql backup $bkpdate $bkptime" >> $log

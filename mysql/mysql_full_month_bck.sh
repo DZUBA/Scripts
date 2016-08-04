@@ -1,14 +1,14 @@
 #!/bin/sh
 PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
 
-bkpdate=`date "+%Y%m%d"`
-bkptime=`date "+%H%M%S"`
-lastmonthdate=`date "+%Y%m" -d 'last month'`
+bkpdate=$(date "+%Y%m%d")
+bkptime=$(date "+%H%M%S")
+lastmonthdate=$(date "+%Y%m" -d 'last month')
 backupdir=/backup/monthly/thismonth
 monthly=/backup/monthly
 daily=/backup/daily
 mycnf=/etc/mysql/my.cnf
-mysqlpasswd=`cat ~/.mysqlpasswd`
+mysqlpasswd=$(cat $HOME/.mysqlpasswd)
 log=/backup/log/backup.log
 
 #Moving last week full backup to his original date dir
